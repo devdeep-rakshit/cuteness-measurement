@@ -14,12 +14,22 @@ export default function App(){
    let s:MediaStream;try{s=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:mode},width:{ideal:1280},height:{ideal:1600}}})}catch(e){const err=e as {name?:string};if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError')throw new Error('Camera permission is blocked. In Chrome, tap the site icon beside the address bar → Permissions → Camera → Allow, then reload.');if(err.name==='NotFoundError')throw new Error('No camera was found on this device.');throw new Error('Could not open the camera. Close other camera apps, allow camera permission, then try again.')}
    stream.current=s;if(video.current){video.current.srcObject=s;await video.current.play()}setFacing(mode);setReady(true);
    try{
-    const vision=await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm');
+    const wasmCandidates=[
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm',
+      'https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm'
+    ];
+    let vision: Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>> | null = null;
+    let wasmError: unknown;
+    for(const wasmPath of wasmCandidates){
+      try{vision=await FilesetResolver.forVisionTasks(wasmPath);break}
+      catch(e){wasmError=e}
+    }
+    if(!vision)throw wasmError instanceof Error?wasmError:new Error('Could not load MediaPipe runtime from either CDN.');
     const opts={baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite'},runningMode:'VIDEO' as const,minDetectionConfidence:.55};
     try{detector.current=await FaceDetector.createFromOptions(vision,{...opts,baseOptions:{...opts.baseOptions,delegate:'GPU'}})}
     catch{detector.current=await FaceDetector.createFromOptions(vision,opts)}
     setError('');
-   }catch(e){detector.current=null;setError('Camera is open, but the face detector could not download or initialize. Check your internet connection, disable content blockers for this site, and tap Retry detector.')}
+   }catch(e){detector.current=null;const detail=e instanceof Error?e.message:String(e);setError('Face detector failed to load. Check that storage.googleapis.com and a MediaPipe CDN are reachable, then tap Retry. Details: '+detail.slice(0,180))}
   }catch(e){setError(e instanceof Error?e.message:'Camera could not start. Check browser camera permissions.')}finally{setLoading(false)}},[facing]);
  const capture=useCallback((score:number,complete:boolean)=>{const v=video.current,c=canvas.current;if(!v||!c||!v.videoWidth)return;const ctx=c.getContext('2d');if(!ctx)return;c.width=v.videoWidth;c.height=v.videoHeight;if(facing==='user'){ctx.translate(c.width,0);ctx.scale(-1,1)}ctx.filter=active.css;ctx.drawImage(v,0,0,c.width,c.height);ctx.setTransform(1,0,0,1,0,0);ctx.filter='none';ctx.textAlign='center';ctx.font=Math.round(c.width*.1)+'px serif';if(filter==='bunny')ctx.fillText('🐰',c.width/2,c.height*.22);if(filter==='cat')ctx.fillText('🐱',c.width/2,c.height*.22);if(filter==='heart'||filter==='kawaii')for(let i=0;i<12;i++)ctx.fillText(i%2?'♡':'✦',(i*173+61)%c.width,(i*251+83)%(c.height*.75));setResult({src:c.toDataURL('image/png'),score:Math.round(score),complete})},[active.css,facing,filter]);
  useEffect(()=>{let dead=false;const loop=(now:number)=>{if(dead)return;const v=video.current;if(v&&v.readyState>=2&&detector.current&&!result){try{const found=detector.current.detectForVideo(v,now).detections.length>0;setFace(found);if(found){if(last.current!==null)elapsedRef.current+=Math.min(100,now-last.current);elapsedRef.current=Math.min(15000,elapsedRef.current);setElapsed(elapsedRef.current);if(elapsedRef.current>=15000)capture(100,true)}last.current=now}catch{}}raf.current=requestAnimationFrame(loop)};raf.current=requestAnimationFrame(loop);return()=>{dead=true;cancelAnimationFrame(raf.current)}},[ready,result,capture]);
