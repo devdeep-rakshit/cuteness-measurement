@@ -15,9 +15,9 @@ export default function App(){
    stream.current=s;if(video.current){video.current.srcObject=s;await video.current.play()}setFacing(mode);setReady(true);
    try{
     // Use same-origin assets bundled during deployment, not third-party runtime CDNs.
-    const localBase=import.meta.env.BASE_URL;
+    const localBase='/cuteness-measurement/';
     const vision=await FilesetResolver.forVisionTasks(`${localBase}mediapipe/wasm`);
-    const opts={baseOptions:{modelAssetPath:`${import.meta.env.BASE_URL}face_detector.tflite`},runningMode:'VIDEO' as const,minDetectionConfidence:.55};
+    const opts={baseOptions:{modelAssetPath:`${'/cuteness-measurement/'}face_detector.tflite`},runningMode:'VIDEO' as const,minDetectionConfidence:.55};
     try{detector.current=await FaceDetector.createFromOptions(vision,{...opts,baseOptions:{...opts.baseOptions,delegate:'GPU'}})}
     catch{detector.current=await FaceDetector.createFromOptions(vision,opts)}
     setError('');
