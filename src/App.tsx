@@ -6,7 +6,7 @@ const messages=['Detecting cuteness… 🎀','Analyzing your smile… 💗','Sca
 const compliments=['Extremely Cute! ⭐','Certified Cutie! 💗','Maximum Kawaii Achieved! ✨','Your smile is pure sunshine! 🌸','Cuteness level: Legendary! 🐰','Too adorable to calculate! 💕'];
 export default function App(){
  const video=useRef<HTMLVideoElement>(null),canvas=useRef<HTMLCanvasElement>(null),stream=useRef<MediaStream|null>(null),detector=useRef<FaceDetector|null>(null),raf=useRef(0),last=useRef<number|null>(null),elapsedRef=useRef(0);
- const [ready,setReady]=useState(false),[face,setFace]=useState(false),[elapsed,setElapsed]=useState(0),[filter,setFilter]=useState('pinkish'),[facing,setFacing]=useState<'user'|'environment'>('user'),[error,setError]=useState(''),[loading,setLoading]=useState(false),[message,setMessage]=useState(0),[result,setResult]=useState<{src:string;score:number;complete:boolean}|null>(null);
+ const [ready,setReady]=useState(false),[face,setFace]=useState(false),[elapsed,setElapsed]=useState(0),[filter,setFilter]=useState('none'),[facing,setFacing]=useState<'user'|'environment'>('user'),[error,setError]=useState(''),[loading,setLoading]=useState(false),[message,setMessage]=useState(0),[result,setResult]=useState<{src:string;score:number;complete:boolean}|null>(null);
  const active=filters.find(f=>f.id===filter)!;const progress=Math.min(100,elapsed/150);
  const stop=()=>{stream.current?.getTracks().forEach(t=>t.stop());stream.current=null;setReady(false);detector.current?.close();detector.current=null};
  const start=useCallback(async(mode:'user'|'environment'=facing)=>{setError('');setLoading(true);stop();try{
