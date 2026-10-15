@@ -14,18 +14,10 @@ export default function App(){
    let s:MediaStream;try{s=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:mode},width:{ideal:1280},height:{ideal:1600}}})}catch(e){const err=e as {name?:string};if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError')throw new Error('Camera permission is blocked. In Chrome, tap the site icon beside the address bar → Permissions → Camera → Allow, then reload.');if(err.name==='NotFoundError')throw new Error('No camera was found on this device.');throw new Error('Could not open the camera. Close other camera apps, allow camera permission, then try again.')}
    stream.current=s;if(video.current){video.current.srcObject=s;await video.current.play()}setFacing(mode);setReady(true);
    try{
-    const wasmCandidates=[
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm',
-      'https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm'
-    ];
-    let vision: Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>> | null = null;
-    let wasmError: unknown;
-    for(const wasmPath of wasmCandidates){
-      try{vision=await FilesetResolver.forVisionTasks(wasmPath);break}
-      catch(e){wasmError=e}
-    }
-    if(!vision)throw wasmError instanceof Error?wasmError:new Error('Could not load MediaPipe runtime from either CDN.');
-    const opts={baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite'},runningMode:'VIDEO' as const,minDetectionConfidence:.55};
+    // Use same-origin assets bundled during deployment, not third-party runtime CDNs.
+    const localBase=import.meta.env.BASE_URL;
+    const vision=await FilesetResolver.forVisionTasks(`${localBase}mediapipe/wasm`);
+    const opts={baseOptions:{modelAssetPath:`${import.meta.env.BASE_URL}face_detector.tflite`},runningMode:'VIDEO' as const,minDetectionConfidence:.55};
     try{detector.current=await FaceDetector.createFromOptions(vision,{...opts,baseOptions:{...opts.baseOptions,delegate:'GPU'}})}
     catch{detector.current=await FaceDetector.createFromOptions(vision,opts)}
     setError('');
