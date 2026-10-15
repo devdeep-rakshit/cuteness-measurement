@@ -22,6 +22,11 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Bundle MediaPipe assets locally
+        run: |
+          mkdir -p public/mediapipe
+          cp -R node_modules/@mediapipe/tasks-vision/wasm public/mediapipe/wasm
+          curl -fL --retry 3 --retry-all-errors https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite -o public/face_detector.tflite
       - name: Build
         run: npm run build
       - name: Setup Pages
