@@ -53,6 +53,7 @@ export default function App() {
   const startedAt = useRef(0);
   const elapsedRef = useRef(0);
   const previousFrameAt = useRef(0);
+  const completedRef = useRef(false);
   const [ready, setReady] = useState(false);
   const [face, setFace] = useState(false);
   const [modelReady, setModelReady] = useState(false);
@@ -107,6 +108,7 @@ export default function App() {
       startedAt.current = 0;
       elapsedRef.current = 0;
       previousFrameAt.current = 0;
+      completedRef.current = false;
       setElapsed(0);
     } catch (e) {
       const err = e as { name?: string; message?: string };
@@ -163,7 +165,7 @@ export default function App() {
             const hasFace = detections.length > 0;
             const now = Date.now();
             setFace(hasFace);
-            if (hasFace) {
+            if (hasFace && !completedRef.current) {
               if (!startedAt.current) {
                 startedAt.current = now;
                 previousFrameAt.current = now;
@@ -175,6 +177,7 @@ export default function App() {
                 elapsedRef.current = ms;
                 setElapsed(ms);
                 if (ms >= 15000) {
+                  completedRef.current = true;
                   startedAt.current = 0;
                   previousFrameAt.current = 0;
                   capture(100, true);
@@ -215,6 +218,7 @@ export default function App() {
     startedAt.current = 0;
     elapsedRef.current = 0;
     previousFrameAt.current = 0;
+    completedRef.current = false;
     setElapsed(0);
     setResult(null);
     setSavedMessage('');
