@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as faceapi from '@vladmandic/face-api';
-import { Camera, SwitchCamera, Image as ImageIcon, Download, RotateCcw, Heart, Sparkles } from 'lucide-react';
+import { Camera, SwitchCamera, Download, RotateCcw, Heart, Sparkles } from 'lucide-react';
 
 const filters = [
   { id: 'pinkish', name: 'Pinkish', emoji: '🌸', css: 'saturate(1.08) sepia(.08) hue-rotate(315deg) brightness(1.04)' },
@@ -51,6 +51,8 @@ export default function App() {
   const raf = useRef<number>(0);
   const lastDetection = useRef(0);
   const startedAt = useRef(0);
+  const elapsedRef = useRef(0);
+  const previousFrameAt = useRef(0);
   const [ready, setReady] = useState(false);
   const [face, setFace] = useState(false);
   const [modelReady, setModelReady] = useState(false);
@@ -102,7 +104,9 @@ export default function App() {
         const detail = e instanceof Error ? e.message : 'Unknown model loading error';
         setError(`Camera is on, but the local face model did not load: ${detail}. You can still capture a photo.`);
       }
-      startedAt.current = Date.now();
+      startedAt.current = 0;
+      elapsedRef.current = 0;
+      previousFrameAt.current = 0;
       setElapsed(0);
     } catch (e) {
       const err = e as { name?: string; message?: string };
@@ -155,17 +159,37 @@ export default function App() {
             v,
             new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.35 }),
           );
-          if (!dead) setFace(detections.length > 0);
+          if (!dead) {
+            const hasFace = detections.length > 0;
+            const now = Date.now();
+            setFace(hasFace);
+            if (hasFace) {
+              if (!startedAt.current) {
+                startedAt.current = now;
+                previousFrameAt.current = now;
+                elapsedRef.current = 0;
+                setElapsed(0);
+              } else if (previousFrameAt.current) {
+                const delta = Math.min(now - previousFrameAt.current, 350);
+                const ms = Math.min(15000, elapsedRef.current + delta);
+                elapsedRef.current = ms;
+                setElapsed(ms);
+                if (ms >= 15000) {
+                  startedAt.current = 0;
+                  previousFrameAt.current = 0;
+                  capture(100, true);
+                }
+              }
+              previousFrameAt.current = now;
+            } else {
+              previousFrameAt.current = 0;
+            }
+          }
         } catch {
-          if (!dead) setFace(false);
-        }
-      }
-      if (ready && startedAt.current) {
-        const ms = Math.min(15000, Date.now() - startedAt.current);
-        setElapsed(ms);
-        if (ms >= 15000) {
-          startedAt.current = 0;
-          capture(100, true);
+          if (!dead) {
+            setFace(false);
+            previousFrameAt.current = 0;
+          }
         }
       }
       raf.current = requestAnimationFrame(loop);
@@ -189,6 +213,8 @@ export default function App() {
 
   const reset = () => {
     startedAt.current = 0;
+    elapsedRef.current = 0;
+    previousFrameAt.current = 0;
     setElapsed(0);
     setResult(null);
     setSavedMessage('');
@@ -226,16 +252,6 @@ export default function App() {
     image.src = result.src;
   };
 
-  const upload = (file?: File) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setSavedMessage('');
-      setResult({ src: String(reader.result), score: 100, complete: true });
-    };
-    reader.readAsDataURL(file);
-  };
-
   return <main className="app">
     <header><span>🎀</span><b> Cuteness Measurement</b><span>✨</span></header>
     <section className="card">
@@ -269,8 +285,7 @@ export default function App() {
           </button>
         )}</div>
         <div className="controls">
-          <label className="side"><ImageIcon/><input type="file" accept="image/*" onChange={e => upload(e.target.files?.[0])}/></label>
-          <button className="shutter" onClick={() => ready ? capture(progress, false) : start()} aria-label="Capture"><Camera size={26}/></button>
+          <div className="shutter" role="img" aria-label="Automatic capture at 100%"><Sparkles size={26}/></div>
           <button className="side" disabled={!ready} onClick={() => start(facing === 'user' ? 'environment' : 'user')} aria-label="Switch camera"><SwitchCamera/></button>
         </div>
         <p className="note"><Sparkles size={13}/> Just for fun, not a scientific score <Heart size={12}/></p>
