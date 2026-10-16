@@ -11,8 +11,38 @@ const filters = [
   { id: 'heart', name: 'Heart', emoji: '💗', css: 'saturate(1.18) sepia(.12) hue-rotate(325deg) brightness(1.07)' },
   { id: 'dreamy', name: 'Dreamy', emoji: '🌙', css: 'saturate(.95) brightness(1.13) contrast(.92)' },
 ];
-const messages = ['Detecting cuteness… 🌸', 'Analyzing your smile… 💗', 'Scanning adorable vibes… ✨', 'Collecting sparkles… 🌟', 'Measuring kawaii energy…', 'Calculating charm levels…', 'Finding maximum cuteness…', 'Your smile is loading…', 'Almost there, cutie!'];
-const compliments = ['Extremely Cute! 💖', 'Certified Cutie! ✨', 'Maximum Kawaii Achieved! 🎀', 'Your smile is pure sunshine! ☀️', 'Cuteness level: Legendary! 🐰', 'Too adorable to calculate! 💗'];
+
+const messages = [
+  'Your smile is pure sunshine ☀️',
+  'Certified cutie energy detected 💖',
+  'That face deserves a thousand hearts 💗',
+  'Kawaii levels are going through the roof 🎀',
+  'The camera is blushing now 🌸',
+  'Too adorable for ordinary math ✨',
+  'Main-character cuteness unlocked 💫',
+  'Warning: extreme charm detected 🐰',
+  'You make cute look effortless 💕',
+];
+const compliments = [
+  '100% CUTE! 💖',
+  'Certified Cutie! ✨',
+  'Maximum Kawaii Achieved! 🎀',
+  'Sunshine in human form! ☀️',
+  'Cuteness level: LEGENDARY! 🐰',
+  'Too adorable to calculate! 💗',
+];
+const saveMessages = [
+  'Main-character energy ✨',
+  'Certified heart-stealer 💘',
+  'A little sunshine for your gallery ☀️',
+  'Cute today, iconic forever 🎀',
+  'Proof that magic is real 🌸',
+  'Warning: dangerously adorable 💗',
+  'Keep this smile close 💫',
+  'Kawaii masterpiece unlocked 🐰',
+  'The world got 100% cuter 💕',
+  'One photo, endless charm ✨',
+];
 
 export default function App() {
   const video = useRef<HTMLVideoElement>(null);
@@ -31,6 +61,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(0);
   const [result, setResult] = useState<{ src: string; score: number; complete: boolean } | null>(null);
+  const [savedMessage, setSavedMessage] = useState('');
   const active = filters.find(f => f.id === filter) ?? filters[1];
   const progress = Math.min(100, elapsed / 150);
 
@@ -48,7 +79,9 @@ export default function App() {
     setFace(false);
     setModelReady(false);
     try {
-      if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera access needs HTTPS. Open this site using its GitHub Pages link in Chrome.');
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera access needs HTTPS. Open this website using its GitHub Pages link in Chrome.');
+      }
       const media = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 1600 } },
@@ -102,8 +135,11 @@ export default function App() {
     if (filter === 'bunny') ctx.fillText('🐰', c.width / 2, c.height * .22);
     if (filter === 'cat') ctx.fillText('🐱', c.width / 2, c.height * .22);
     if (filter === 'heart' || filter === 'kawaii') {
-      for (let i = 0; i < 10; i++) ctx.fillText(i % 2 ? '✨' : '💗', (i * 173 + 61) % c.width, (i * 251 + 83) % (c.height * .75));
+      for (let i = 0; i < 10; i++) {
+        ctx.fillText(i % 2 ? '✨' : '💗', (i * 173 + 61) % c.width, (i * 251 + 83) % (c.height * .75));
+      }
     }
+    setSavedMessage('');
     setResult({ src: c.toDataURL('image/png'), score: Math.round(score), complete });
   }, [active.css, facing, filter]);
 
@@ -115,7 +151,10 @@ export default function App() {
       if (v && v.readyState >= 2 && modelReady && now - lastDetection.current > 250) {
         lastDetection.current = now;
         try {
-          const detections = await faceapi.detectAllFaces(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.35 }));
+          const detections = await faceapi.detectAllFaces(
+            v,
+            new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.35 }),
+          );
           if (!dead) setFace(detections.length > 0);
         } catch {
           if (!dead) setFace(false);
@@ -139,7 +178,7 @@ export default function App() {
   }, [ready, modelReady, capture]);
 
   useEffect(() => {
-    const id = window.setInterval(() => setMessage(i => (i + 1) % messages.length), 950);
+    const id = window.setInterval(() => setMessage(i => (i + 1) % messages.length), 1900);
     return () => window.clearInterval(id);
   }, []);
 
@@ -152,19 +191,48 @@ export default function App() {
     startedAt.current = 0;
     setElapsed(0);
     setResult(null);
+    setSavedMessage('');
     setMessage(0);
   };
+
   const save = () => {
     if (!result) return;
-    const a = document.createElement('a');
-    a.href = result.src;
-    a.download = 'cuteness-measurement.png';
-    a.click();
+    const msg = saveMessages[Math.floor(Math.random() * saveMessages.length)];
+    const image = new Image();
+    image.onload = () => {
+      const output = document.createElement('canvas');
+      output.width = image.naturalWidth;
+      output.height = image.naturalHeight;
+      const ctx = output.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(image, 0, 0);
+      const bannerHeight = Math.max(118, output.height * 0.17);
+      ctx.fillStyle = 'rgba(207, 48, 112, 0.84)';
+      ctx.fillRect(0, 0, output.width, bannerHeight);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `900 ${Math.round(output.width * 0.075)}px sans-serif`;
+      ctx.fillText('100% CUTE 💖', output.width / 2, bannerHeight * 0.36, output.width * 0.92);
+      ctx.font = `700 ${Math.round(output.width * 0.034)}px sans-serif`;
+      ctx.fillText(msg, output.width / 2, bannerHeight * 0.73, output.width * 0.92);
+      const a = document.createElement('a');
+      a.href = output.toDataURL('image/png');
+      a.download = '100-percent-cute.png';
+      a.click();
+      setSavedMessage(`Saved with 100% CUTE 💖 · ${msg}`);
+    };
+    image.onerror = () => setSavedMessage('Could not prepare the photo. Please try saving again.');
+    image.src = result.src;
   };
+
   const upload = (file?: File) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => setResult({ src: String(reader.result), score: 100, complete: true });
+    reader.onload = () => {
+      setSavedMessage('');
+      setResult({ src: String(reader.result), score: 100, complete: true });
+    };
     reader.readAsDataURL(file);
   };
 
@@ -175,13 +243,31 @@ export default function App() {
         <div className="view">
           <video ref={video} playsInline muted className={facing === 'user' ? 'mirror' : ''} style={{ filter: active.css }} />
           <canvas ref={canvas} hidden />
-          {!ready && <div className="placeholder"><div className="bigbow">🎀</div><h2>Your cute moment awaits</h2><p>Allow camera access to begin your kawaii measurement.</p><button className="pink" onClick={() => start()} disabled={loading}><Camera size={18}/>{loading ? 'Opening camera…' : 'Open Camera'}</button></div>}
+          {!ready && <div className="placeholder">
+            <div className="bigbow">🎀</div>
+            <h2>Your cute moment awaits</h2>
+            <p>Allow camera access to begin your kawaii measurement.</p>
+            <button className="pink" onClick={() => start()} disabled={loading}>
+              <Camera size={18}/>{loading ? 'Opening camera…' : 'Open Camera'}
+            </button>
+          </div>}
         </div>
         {ready && <div className="status">{!modelReady ? '📷 Camera ready · loading local face detector' : face ? '💖 Face detected!' : '🔎 Looking for a face…'}</div>}
-        {ready && <div className="meter"><strong>{Math.round(progress)}<small>%</small></strong><div className="track"><i style={{ width: progress + '%' }}/><span>💗</span></div><b>{modelReady ? (face ? messages[message] : 'Position your face in the frame 🎀') : 'Starting local face detector…'}</b><small>{Math.floor(elapsed / 1000)} / 15 seconds</small></div>}
+        {ready && <div className="meter">
+          <strong>{Math.round(progress)}<small>%</small></strong>
+          <div className="track"><i style={{ width: progress + '%' }}/><span>💗</span></div>
+          <b key={message} className="measure-message">
+            {modelReady ? (face ? messages[message] : 'Bring your cute face into the frame 🎀') : 'Warming up the cuteness scanner… ✨'}
+          </b>
+          <small>{Math.floor(elapsed / 1000)} / 15 seconds</small>
+        </div>}
         {error && <p className="error">{error} <button onClick={() => start(facing)}>Retry</button></p>}
         <div className="filter-title">✨ Choose your vibe ✨</div>
-        <div className="filters">{filters.map(f => <button key={f.id} className={filter === f.id ? 'chosen' : ''} onClick={() => setFilter(f.id)}><span>{f.emoji}</span>{f.name}</button>)}</div>
+        <div className="filters">{filters.map(f =>
+          <button key={f.id} className={filter === f.id ? 'chosen' : ''} onClick={() => setFilter(f.id)}>
+            <span>{f.emoji}</span>{f.name}
+          </button>
+        )}</div>
         <div className="controls">
           <label className="side"><ImageIcon/><input type="file" accept="image/*" onChange={e => upload(e.target.files?.[0])}/></label>
           <button className="shutter" onClick={() => ready ? capture(progress, false) : start()} aria-label="Capture"><Camera size={26}/></button>
@@ -189,7 +275,20 @@ export default function App() {
         </div>
         <p className="note"><Sparkles size={13}/> Just for fun, not a scientific score <Heart size={12}/></p>
       </>}
-      {result && <><div className="result-photo"><img src={result.src} alt="Captured photo"/></div><div className="result"><small>{result.complete ? 'MEASUREMENT COMPLETE' : 'SNAPSHOT CAPTURED'}</small><h1>{result.complete ? compliments[Math.floor(Date.now() / 1000) % compliments.length] : 'Cute moment captured! 💗'}</h1><p>{result.complete ? 'Your smile can brighten anyone’s day.' : `You captured your cuteness moment. Keep going to reach 100%!`}</p><div className="actions"><button onClick={reset}><RotateCcw size={16}/> Try Again</button><button className="pink" onClick={save}><Download size={16}/> Save Photo</button></div></div><button className="retake" onClick={() => { reset(); if (!stream.current) start(); }}>Retake photo</button></>}
+      {result && <>
+        <div className="result-photo"><img src={result.src} alt="Captured photo"/></div>
+        <div className="result">
+          <small>{result.complete ? 'MEASUREMENT COMPLETE' : 'SNAPSHOT CAPTURED'}</small>
+          <h1>{result.complete ? compliments[Math.floor(Date.now() / 1000) % compliments.length] : 'Cute moment captured! 💗'}</h1>
+          <p>{result.complete ? 'Your smile can brighten anyone’s day.' : 'You captured your cuteness moment. Keep going to reach 100%!'}</p>
+          <div className="actions">
+            <button onClick={reset}><RotateCcw size={16}/> Try Again</button>
+            <button className="pink" onClick={save}><Download size={16}/> Save Photo</button>
+          </div>
+          {savedMessage && <p className="saved-message" role="status">{savedMessage}</p>}
+        </div>
+        <button className="retake" onClick={() => { reset(); if (!stream.current) start(); }}>Retake photo</button>
+      </>}
     </section>
     <footer>Made with 🎀 and a little sparkle dust</footer>
   </main>;
