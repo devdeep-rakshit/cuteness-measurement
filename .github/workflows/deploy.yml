@@ -26,9 +26,9 @@ jobs:
         run: |
           mkdir -p public/models
           curl -fL --retry 3 --retry-all-errors https://raw.githubusercontent.com/vladmandic/face-api/master/model/tiny_face_detector_model-weights_manifest.json -o public/models/tiny_face_detector_model-weights_manifest.json
-          curl -fL --retry 3 --retry-all-errors https://raw.githubusercontent.com/vladmandic/face-api/master/model/tiny_face_detector_model-shard1 -o public/models/tiny_face_detector_model-shard1
+          curl -fL --retry 3 --retry-all-errors https://raw.githubusercontent.com/vladmandic/face-api/master/model/tiny_face_detector_model.bin -o public/models/tiny_face_detector_model.bin
           test -s public/models/tiny_face_detector_model-weights_manifest.json
-          test -s public/models/tiny_face_detector_model-shard1
+          test -s public/models/tiny_face_detector_model.bin
       - name: Build
         run: npm run build
       - name: Setup Pages
