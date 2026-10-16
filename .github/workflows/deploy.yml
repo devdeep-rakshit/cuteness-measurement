@@ -22,11 +22,13 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Bundle MediaPipe assets locally
+      - name: Bundle face detector model locally
         run: |
-          mkdir -p public/mediapipe
-          cp -R node_modules/@mediapipe/tasks-vision/wasm public/mediapipe/wasm
-          curl -fL --retry 3 --retry-all-errors https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite -o public/face_detector.tflite
+          mkdir -p public/models
+          curl -fL --retry 3 --retry-all-errors https://raw.githubusercontent.com/vladmandic/face-api/master/model/tiny_face_detector_model-weights_manifest.json -o public/models/tiny_face_detector_model-weights_manifest.json
+          curl -fL --retry 3 --retry-all-errors https://raw.githubusercontent.com/vladmandic/face-api/master/model/tiny_face_detector_model-shard1 -o public/models/tiny_face_detector_model-shard1
+          test -s public/models/tiny_face_detector_model-weights_manifest.json
+          test -s public/models/tiny_face_detector_model-shard1
       - name: Build
         run: npm run build
       - name: Setup Pages

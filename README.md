@@ -1,17 +1,22 @@
 # Cuteness Measurement 🎀
 
-A mobile-first React + TypeScript + Vite camera app using MediaPipe Face Detector and Canvas.
+A mobile-first React camera app with cute filters, a 15-second cuteness meter, photo capture, and PNG saving.
 
-## Run locally
-1. Install Node.js 20+
-2. Run `npm install`
-3. Run `npm run dev`
-4. Open the localhost URL. Camera access requires localhost or HTTPS.
+## Face detection
 
-## Build
-`npm run build`
+The app uses the browser-based Tiny Face Detector from [@vladmandic/face-api](https://github.com/vladmandic/face-api), adapted from the face-api.js ecosystem and the MIT-licensed [Benson Ruan Face-Detection project](https://github.com/bensonruan/Face-Detection).
 
-## Deploy to GitHub Pages
-The project is configured for Vite. For a repository project page, set Vite `base` to `/cuteness-measurement/`, build, then publish `dist` with GitHub Pages or add a Pages workflow.
+The GitHub Pages workflow downloads the model weights at build time into the site's own `public/models` folder. The deployed app loads the model from the same website, not from a runtime CDN. Face detection runs in the browser; camera frames are not uploaded by this app.
 
-Features: front/rear camera switching, MediaPipe face detection, 15 seconds of accumulated face-visible time, filters, Canvas photo capture/download, mobile-first pink UI. MediaPipe model loads from public CDNs and requires internet on first load. The score is entertainment only, not an objective attractiveness measurement.
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+For local development, download these two files into `public/models/` before opening the camera:
+- `tiny_face_detector_model-weights_manifest.json`
+- `tiny_face_detector_model-shard1`
+
+The GitHub Pages workflow fetches them automatically before building.
